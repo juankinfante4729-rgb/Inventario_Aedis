@@ -77,7 +77,7 @@ function App() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     loadMembers();
@@ -562,7 +562,7 @@ function App() {
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                     <h2 className="text-2xl font-bold text-slate-800">Listado de Socios</h2>
-                    <div className="flex gap-2 w-full md:w-auto">
+                    <div className="flex gap-2 w-full md:w-auto items-center">
                       <div className="relative flex-1 md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input 
@@ -576,6 +576,19 @@ function App() {
                       <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
                         <Download size={18} /> <span className="hidden sm:inline">Exportar</span>
                       </button>
+                      <div className="ml-2 flex items-center">
+                        <label htmlFor="itemsPerPage" className="mr-2 text-sm text-gray-700">Registros por página:</label>
+                        <select
+                          id="itemsPerPage"
+                          value={itemsPerPage}
+                          onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                          className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                        >
+                          {[5, 10, 20, 50, 100].map(n => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
 
