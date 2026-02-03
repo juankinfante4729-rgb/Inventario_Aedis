@@ -133,11 +133,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onClose }) => {
                 </div>
               </div>
 
-              {/* Quick Contact Box for Sidebar */}
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm print:p-1.5">
-                 <p className="text-gray-500 text-xs font-semibold uppercase mb-1 print:text-[8px]">Contacto Emergencia</p>
-                 <p className="text-gray-800 font-medium print:text-[10px]">{member.contactoEmergencia || 'No registrado'}</p>
-              </div>
+                {/* Quick Contact Box eliminado, movido a sección de representante */}
             </div>
 
             {/* Right Column: Detailed Info */}
@@ -184,24 +180,32 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onClose }) => {
                 </div>
               </section>
 
-              {/* Representative Data (Only if exists) */}
-              {(member.nombreRepresentante || member.parentesco) && (
-                <section className="bg-blue-50 p-3 rounded border border-blue-100 print:bg-transparent print:border-gray-200 print:p-1">
+                {/* Representative Data (Solo si existe) */}
+                {(member.nombreRepresentante || member.parentesco) && (
+                 <section className="bg-blue-50 p-3 rounded border border-blue-100 print:bg-transparent print:border-gray-200 print:p-1">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-blue-800 mb-2 print:text-brand-700 print:mb-0.5 print:text-[10px]">
-                    Representante Legal
+                    Datos del Representante (Si aplica)
                   </h3>
                   <div className="grid grid-cols-2 gap-4 text-sm print:text-xs print:gap-x-2 print:gap-y-0.5">
-                     <div>
-                        <span className="block text-gray-500 text-xs print:text-[8px]">Nombre</span>
-                        <span className="font-medium print:text-[10px]">{member.nombreRepresentante}</span>
-                     </div>
-                     <div>
-                        <span className="block text-gray-500 text-xs print:text-[8px]">Parentesco</span>
-                        <span className="font-medium print:text-[10px]">{member.parentesco}</span>
-                     </div>
+                    <div>
+                      <span className="block text-gray-500 text-xs print:text-[8px]">Nombre</span>
+                      <span className="font-medium print:text-[10px]">{member.nombreRepresentante}</span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500 text-xs print:text-[8px]">Parentesco</span>
+                      <span className="font-medium print:text-[10px]">{member.parentesco}</span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500 text-xs print:text-[8px]">Cédula del Representante</span>
+                      <span className="font-medium print:text-[10px]">{member.cedulaRepresentante || 'No registrada'}</span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-500 text-xs print:text-[8px]">Contacto Emergencia</span>
+                      <span className="font-medium print:text-[10px]">{member.contactoEmergencia || 'No registrado'}</span>
+                    </div>
                   </div>
-                </section>
-              )}
+                 </section>
+                )}
 
               {/* Socio-economic Data */}
               <section>

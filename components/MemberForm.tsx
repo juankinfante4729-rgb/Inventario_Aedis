@@ -58,7 +58,7 @@ const TIPOS_VIVIENDA = [
 ];
 
 const MemberForm: React.FC<MemberFormProps> = ({ initialData, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState<Partial<Member>>(initialFormState);
+  const [formData, setFormData] = useState<Partial<Member>>(initialData ? { ...initialFormState, ...initialData } : initialFormState);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<{ data: string; name: string } | undefined>(undefined);
   const [showCommissionDropdown, setShowCommissionDropdown] = useState(false);
@@ -69,8 +69,7 @@ const MemberForm: React.FC<MemberFormProps> = ({ initialData, onSubmit, onCancel
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
-      
+      setFormData(prev => ({ ...prev, ...initialData }));
       // Check if occupation is in the standard list
       if (initialData.ocupacionActual && !OCUPACIONES.includes(initialData.ocupacionActual)) {
         setIsCustomOccupation(true);
@@ -93,7 +92,7 @@ const MemberForm: React.FC<MemberFormProps> = ({ initialData, onSubmit, onCancel
     }
 
     if (name === 'cedula') {
-      // Only digits, max length 10
+      // Solo permitir dígitos, máximo 10
       const numericValue = value.replace(/\D/g, '');
       if (numericValue.length > 10) return;
       setFormData(prev => ({ ...prev, [name]: numericValue }));
@@ -170,9 +169,12 @@ const MemberForm: React.FC<MemberFormProps> = ({ initialData, onSubmit, onCancel
         alert('El celular debe tener 10 dígitos y empezar con 09');
         return;
     }
-    if (formData.cedula && formData.cedula.length !== 10) {
-        alert('La cédula debe tener 10 dígitos');
-        return;
+    // Validar cédula solo si está vacía o no tiene 10 dígitos
+    // Si el valor inicialData.cedula existe y tiene 10 dígitos, permitir guardar sin obligar a reescribir
+    const cedulaActual = formData.cedula || initialData?.cedula || '';
+    if (cedulaActual.length !== 10) {
+      alert('La cédula debe tener 10 dígitos');
+      return;
     }
 
     setLoading(true);
@@ -208,9 +210,8 @@ const MemberForm: React.FC<MemberFormProps> = ({ initialData, onSubmit, onCancel
             <div>
               <label className="block text-sm font-medium text-gray-700">Cédula * (10 dígitos)</label>
               <input 
-                required 
                 name="cedula" 
-                value={formData.cedula || ''} 
+                value={formData.cedula || initialData?.cedula || ''} 
                 onChange={handleChange} 
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:ring-brand-500 focus:border-brand-500" 
                 placeholder="0000000000"
@@ -412,27 +413,32 @@ const MemberForm: React.FC<MemberFormProps> = ({ initialData, onSubmit, onCancel
               <label className="block text-sm font-medium text-gray-700">Email</label>
               <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
             </div>
-             <div>
-              <label className="block text-sm font-medium text-gray-700">Contacto de Emergencia</label>
-              <input name="contactoEmergencia" value={formData.contactoEmergencia || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Nombre y Teléfono" />
-            </div>
+            {/* Contacto de Emergencia movido a sección de representante */}
           </div>
         </fieldset>
 
-        {/* Sección 5: Representante (NUEVA) */}
-        <fieldset>
-          <legend className="text-lg font-semibold text-brand-600 mb-4 border-b border-gray-200 w-full pb-2">Datos del Representante (Si aplica)</legend>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Sección 5: Representante (NUEVA) */}
+          <fieldset>
+           <legend className="text-lg font-semibold text-brand-600 mb-4 border-b border-gray-200 w-full pb-2">Datos del Representante (Si aplica)</legend>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-               <label className="block text-sm font-medium text-gray-700">Nombre del Representante</label>
-               <input name="nombreRepresentante" value={formData.nombreRepresentante || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
+              <label className="block text-sm font-medium text-gray-700">Nombre del Representante</label>
+              <input name="nombreRepresentante" value={formData.nombreRepresentante || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" />
             </div>
             <div>
-               <label className="block text-sm font-medium text-gray-700">Parentesco</label>
-               <input name="parentesco" value={formData.parentesco || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Ej: Madre, Padre, Tío" />
+              <label className="block text-sm font-medium text-gray-700">Parentesco</label>
+              <input name="parentesco" value={formData.parentesco || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Ej: Madre, Padre, Tío" />
             </div>
-          </div>
-        </fieldset>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Cédula del Representante</label>
+              <input name="cedulaRepresentante" value={formData.cedulaRepresentante || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Cédula" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Contacto de Emergencia</label>
+              <input name="contactoEmergencia" value={formData.contactoEmergencia || ''} onChange={handleChange} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2" placeholder="Nombre y Teléfono" />
+            </div>
+           </div>
+          </fieldset>
         
         {/* Sección 6: Información Institucional y Archivo */}
         <fieldset>
