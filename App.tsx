@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { fetchMembers, createMember, syncMembers } from './services/api';
 import { Member, DashboardStats } from './types';
 import { Users, LayoutDashboard, PlusCircle, Search, Download, FileText, Menu, X, Filter, Edit, Trash2, ArrowUpDown, AlertTriangle } from 'lucide-react';
@@ -288,23 +290,97 @@ function App() {
   const totalPages = Math.ceil(sortedMembers.length / itemsPerPage);
   const currentMembers = sortedMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const exportToCSV = () => {
-    const headers = ["Nombres", "Apellidos", "Cedula", "Discapacidad", "Porcentaje", "Provincia", "Celular", "Estado", "Comision"];
-    const rows = members.map(m => [
-      m.nombresCompletos, m.apellidosCompletos, `"${m.cedula}"`, m.discapacidadTipo, m.discapacidadPorcentaje, m.provinciaCanton, m.celular, m.estadoSocio, `"${m.comiteComision}"`
-    ]);
-    
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\n" 
-      + rows.map(e => e.join(",")).join("\n");
-      
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "reporte_socios_aedis.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const exportToExcel = () => {
+    // Todos los campos del socio
+    const headers = [
+      "Nombres Completos", "Apellidos Completos", "Cédula", "Fecha Nacimiento", "Género", "Estado Civil", "Nacionalidad", "Tipo Discapacidad", "Porcentaje Discapacidad", "Carnet Registro", "Discapacidad Múltiple", "Ayudas Técnicas", "Condición Salud", "Provincia/Cantón", "Parroquia/Barrio", "Dirección Domiciliaria", "Referencia", "Celular", "Convencional", "Email", "Nombre Representante", "Parentesco", "Cédula Representante", "Contacto Emergencia", "Nivel Instrucción", "Ocupación Actual", "Ingresos Mensuales", "Tipo Vivienda", "Bono Desarrollo", "Fecha Ingreso", "Estado Socio", "Aportes Mensuales", "Comité/Comisión", "Habilidades/Talentos", "Tipo de Socio", "Nro. Registro MIES", "Observaciones", "Enlace Cédula Digital"
+    ];
+    const data = members.map(m => ({
+      "Nombres Completos": m.nombresCompletos,
+      "Apellidos Completos": m.apellidosCompletos,
+      "Cédula": m.cedula,
+      "Fecha Nacimiento": m.fechaNacimiento,
+      "Género": m.genero,
+      "Estado Civil": m.estadoCivil,
+      "Nacionalidad": m.nacionalidad,
+      "Tipo Discapacidad": m.discapacidadTipo,
+      "Porcentaje Discapacidad": m.discapacidadPorcentaje,
+      "Carnet Registro": m.carnetRegistro,
+      "Discapacidad Múltiple": m.discapacidadMultiple,
+      "Ayudas Técnicas": m.ayudasTecnicas,
+      "Condición Salud": m.condicionSalud,
+      "Provincia/Cantón": m.provinciaCanton,
+      "Parroquia/Barrio": m.parroquiaBarrio,
+      "Dirección Domiciliaria": m.direccionDomiciliaria,
+      "Referencia": m.referencia,
+      "Celular": m.celular,
+      "Convencional": m.convencional,
+      "Email": m.email,
+      "Nombre Representante": m.nombreRepresentante,
+      "Parentesco": m.parentesco,
+      "Cédula Representante": m.cedulaRepresentante,
+      "Contacto Emergencia": m.contactoEmergencia,
+      "Nivel Instrucción": m.nivelInstruccion,
+      "Ocupación Actual": m.ocupacionActual,
+      "Ingresos Mensuales": m.ingresosMensuales,
+      "Tipo Vivienda": m.tipoVivienda,
+      "Bono Desarrollo": m.bonoDesarrollo,
+      "Fecha Ingreso": m.fechaIngreso,
+      "Estado Socio": m.estadoSocio,
+      "Aportes Mensuales": m.aportesMensuales,
+      "Comité/Comisión": m.comiteComision,
+      "Habilidades/Talentos": m.habilidadesTalentos,
+      "Tipo de Socio": m.tipoDeSocio,
+      "Nro. Registro MIES": m.numeroRegistroMies,
+      "Observaciones": m.observaciones,
+      "Enlace Cédula Digital": m.linkCedulaDigital || ''
+    }));
+
+    // Crear hoja y libro
+    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+    // Encabezados como primera fila
+    XLSX.utils.sheet_add_aoa(ws, [headers], { origin: "A1" });
+    // Formato de tabla: ancho de columnas, encabezado, bordes
+    const wscols = headers.map(() => ({ wch: 20 }));
+    ws['!cols'] = wscols;
+    // Encabezado en negrita y fondo azul
+    const range = XLSX.utils.decode_range(ws['!ref'] || '');
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cell = ws[XLSX.utils.encode_cell({ r: 0, c: C })];
+      if (cell) {
+        if (!cell.s) cell.s = {};
+        cell.s.font = { bold: true, color: { rgb: "FFFFFF" } };
+        cell.s.fill = { fgColor: { rgb: "2563EB" } };
+        cell.s.alignment = { horizontal: "center" };
+        cell.s.border = {
+          top: { style: "thin", color: { rgb: "2563EB" } },
+          bottom: { style: "thin", color: { rgb: "2563EB" } },
+          left: { style: "thin", color: { rgb: "2563EB" } },
+          right: { style: "thin", color: { rgb: "2563EB" } }
+        };
+      }
+    }
+    // Bordes para todas las celdas
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+        if (cell) {
+          cell.s = cell.s || {};
+          cell.s.border = {
+            top: { style: "thin", color: { rgb: "E5E7EB" } },
+            bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+            left: { style: "thin", color: { rgb: "E5E7EB" } },
+            right: { style: "thin", color: { rgb: "E5E7EB" } }
+          };
+        }
+      }
+    }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Socios AEDIS");
+    // Guardar archivo
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array", cellStyles: true });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, "reporte_socios_aedis.xlsx");
   };
 
   return (
@@ -573,7 +649,7 @@ function App() {
                           onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                         />
                       </div>
-                      <button onClick={exportToCSV} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
+                      <button onClick={exportToExcel} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
                         <Download size={18} /> <span className="hidden sm:inline">Exportar</span>
                       </button>
                       <div className="ml-2 flex items-center">
