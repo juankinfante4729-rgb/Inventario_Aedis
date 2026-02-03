@@ -7,9 +7,43 @@ interface MemberCardProps {
   onClose: () => void;
 }
 
-const MemberCard: React.FC<MemberCardProps> = ({ member, onClose }) => {
-  if (!member) return null;
+// Componente para mostrar PDF o imagen con manejo de error universal
+function UniversalViewer(props: { src: string; isPdf: boolean }) {
+  const { src, isPdf } = props;
+  const [error, setError] = React.useState(false);
+  React.useEffect(() => {
+    const timer = setTimeout(() => setError(true), 3000);
+    return () => clearTimeout(timer);
+  }, [src]);
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-xl p-6 text-center">
+        <div className="text-red-500 text-lg font-bold mb-2">No se pudo cargar el archivo.</div>
+        <div className="text-gray-700">Verifique el enlace, permisos o formato del archivo en Google Drive.</div>
+      </div>
+    );
+  }
+  return isPdf ? (
+    <iframe src={src} title="Cédula Digital PDF" className="w-full h-[70vh] border rounded" />
+  ) : (
+    <img src={src} alt="Cédula Digital" className="w-full max-h-[70vh] object-contain border rounded" onError={() => setError(true)} />
+  );
+}
 
+const MemberCard: React.FC<MemberCardProps> = ({ member, onClose }) => {
+  const [showCedula, setShowCedula] = React.useState(false);
+  if (!member) return null;
+  // Transformar enlace de Google Drive a enlace directo (robusto)
+  let cedulaUrl = member.linkCedulaDigital || '';
+  let originalCedulaUrl = cedulaUrl;
+  // Extraer ID aunque haya parámetros extra
+  let fileId = '';
+  const idMatch = cedulaUrl.match(/drive\.google\.com\/file\/d\/([\w-]+)(?:\/|$)/);
+  if (idMatch) {
+    fileId = idMatch[1];
+    cedulaUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+  }
+  const isPdf = originalCedulaUrl.toLowerCase().includes('.pdf');
   return (
     // 'modal-print-wrapper' is the key class used in index.html @media print
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overflow-y-auto p-4 modal-print-wrapper">
@@ -19,9 +53,21 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onClose }) => {
         <div className="flex justify-between items-center p-4 border-b no-print bg-white sticky top-0 z-10">
           <h2 className="text-xl font-bold text-gray-800">Ficha de Socio</h2>
           <div className="flex gap-2">
+            {member?.linkCedulaDigital ? (
+              <a
+                href={originalCedulaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2 transition-colors shadow-sm"
+                title="Ver Cédula Digital"
+              >
+                <FileText size={18} /> Ver Cédula Digital
+              </a>
+            ) : (
+              <span className="text-xs text-gray-400 ml-2">No hay cédula digital registrada</span>
+            )}
             <button 
               onClick={() => {
-                // Small delay to ensure styles render before print dialog
                 setTimeout(() => window.print(), 100);
               }} 
               className="bg-brand-600 text-white px-4 py-2 rounded hover:bg-brand-700 flex items-center gap-2 transition-colors shadow-sm"
@@ -280,7 +326,7 @@ const MemberCard: React.FC<MemberCardProps> = ({ member, onClose }) => {
                 <p className="font-bold text-gray-800 uppercase">AEDIS ECUADOR</p>
              </div>
           </div>
-
+          {/* Modal de cédula digital eliminado, solo acceso directo */}
         </div>
       </div>
     </div>
